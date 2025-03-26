@@ -13,42 +13,29 @@ require('dotenv').config();
 
 const app = express();
 
-// Middleware (this is correct)
-// app.use(cors({
-//     origin: process.env.FRONTEND_URL,
-//     methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
-//     allowedHeaders: ["Content-Type", "Authorization"],
-//     maxAge: 3600,
-// }));
-// app.use(express.json());
+// Allow only the deployed frontend URLs
+const allowedOrigins = [
+    process.env.FRONTEND_URL,
+    process.env.ADMIN_FRONTEND_URL,
+];
 
-
-// new one for mutliple vite urls 5173,5175 etc
-app.use(cors({
-    origin: function (origin, callback) {
-        // Allow requests with no origin (like curl, Postman, mobile apps, etc.)
-        if (!origin) return callback(null, true);
-
-        // Allow localhost on any port during development
-        if (origin.startsWith("http://localhost")) {
-            return callback(null, true);
-        }
-
-        // Allow the frontend URL from the environment for production
-        if (process.env.FRONTEND_URL && origin === process.env.FRONTEND_URL) {
-            return callback(null, true);
-        }
-
-        // Reject other origins
-        return callback(new Error("Not allowed by CORS"), false);
-    },
-    methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
-    allowedHeaders: ["Content-Type", "Authorization"],
-    credentials: true,
-    maxAge: 3600,
-}));
+app.use(
+    cors({
+        origin: function (origin, callback) {
+            if (allowedOrigins.includes(origin)) {
+                return callback(null, true);
+            }
+            return callback(new Error("Not allowed by CORS"), false);
+        },
+        methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
+        allowedHeaders: ["Content-Type", "Authorization"],
+        credentials: true,
+        maxAge: 3600,
+    })
+);
 
 app.use(express.json());
+
 
 //Serve static files from uploads
 app.use('/uploads', express.static('uploads'));
