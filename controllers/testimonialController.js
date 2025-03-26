@@ -29,8 +29,7 @@ const addTestimonial = (req, res) => {
 //     });
 // }
 
-//new one with pagination
-
+//new (Active/Inactive) testimonial in the admin dashboard with pagination 
 const getTestimonial = (req, res) => {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 5;
@@ -114,9 +113,41 @@ const searchTestimonial = (req, res) => {
     });
 };
 
+// Toggle Service Status (Active/Inactive)
+const toggleTestimonial = (req, res) => {
+    const { id } = req.params;
+
+    const getStatusQuery = 'SELECT status FROM manage_testimonial WHERE testimonial_id = ?';
+    db.query(getStatusQuery, [id], (err, results) => {
+        if (err) {
+            console.error("Error fetching status:", err.message);
+            return res.status(500).json({ message: 'Failed to fetch status' });
+        }
+        if (results.length === 0) {
+            return res.status(404).json({ message: 'Service not found' });
+        }
+
+        // Toggle status
+        const currentStatus = results[0].status;
+        const newStatus = currentStatus === 'Active' ? 'Inactive' : 'Active';
+
+        // Update status in database
+        const updateQuery = 'UPDATE manage_testimonial SET status = ? WHERE testimonial_id = ?';
+        db.query(updateQuery, [newStatus, id], (updateErr) => {
+            if (updateErr) {
+                console.error("Error updating status:", updateErr.message);
+                return res.status(500).json({ message: 'Failed to update status' });
+            }
+            res.status(200).json({ message: `Testimonial status updated to ${newStatus}`, status: newStatus });
+        });
+    });
+};
+
+
 module.exports = {
     addTestimonial,
     getTestimonial,
     deleteTestimonial,
     searchTestimonial,
+    toggleTestimonial,
 };
