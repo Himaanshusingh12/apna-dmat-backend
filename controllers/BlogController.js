@@ -175,6 +175,26 @@ const getActiveblogcategory = (req, res) => {
     });
 };
 
+// Fetch Blogs by Category for User Dashboard
+const getBlogsByCategory = (req, res) => {
+    const { blog_id } = req.params;
+    const sql = `
+        SELECT blogdetail_id, title, image, description 
+        FROM manage_blogdetails 
+        WHERE blog_id = ? AND status = 'Active'
+    `;
+
+    db.query(sql, [blog_id], (err, results) => {
+        if (err) {
+            console.error("Error fetching blogs:", err.message);
+            return res.status(500).json({ message: "Failed to fetch blogs" });
+        }
+
+        res.status(200).json({ message: "Blogs fetched successfully!", data: results });
+    });
+};
+
+
 module.exports = {
     addBlogcategory,
     getBlogcategory,
@@ -183,6 +203,7 @@ module.exports = {
     deleteBlogcategory,
     editBlogcategory,
     getActiveblogcategory,
+    getBlogsByCategory,
 };
 
 

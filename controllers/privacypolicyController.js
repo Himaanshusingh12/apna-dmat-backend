@@ -162,6 +162,19 @@ const editPrivacypolicy = (req, res) => {
     });
 };
 
+
+// get active privacy policy in the user dashboard
+const getActiveprivacy = (req, res) => {
+    const sql = "SELECT * FROM manage_privacypolicy WHERE status = 'Active'";
+    db.query(sql, (err, results) => {
+        if (err) {
+            console.error("Error fetching active privacy policy:", err.message);
+            return res.status(500).json({ message: "Failed to fetch active privacy policy" });
+        }
+        res.status(200).json({ message: "Active privacy policy fetched successfully!", data: results });
+    });
+};
+
 module.exports = {
     addPrivacypolicy,
     getPrivacypolicy,
@@ -169,4 +182,5 @@ module.exports = {
     togglePrivacypolicy,
     deletePrivacypolicy,
     editPrivacypolicy,
+    getActiveprivacy,
 }

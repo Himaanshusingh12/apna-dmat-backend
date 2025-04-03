@@ -1,5 +1,5 @@
 const express = require('express');
-const { addTermscondition, getTermscondition, searchTermscondition, deleteTermscondition, toggleTermcondition, editTermcondition } = require('../controllers/termsconditionController');
+const { addTermscondition, getTermscondition, searchTermscondition, deleteTermscondition, toggleTermcondition, editTermcondition, getActivetermcondition } = require('../controllers/termsconditionController');
 
 
 const router = express.Router();
@@ -15,5 +15,7 @@ router.delete('/delete/:id', deleteTermscondition);
 router.put('/status/:id', toggleTermcondition);
 
 router.put('/edit/:id', editTermcondition);
+
+router.get('/get-active', getActivetermcondition);
 
 module.exports = router;

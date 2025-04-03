@@ -1,5 +1,5 @@
 const express = require('express');
-const { addPrivacypolicy, getPrivacypolicy, searchPrivacypolicy, togglePrivacypolicy, deletePrivacypolicy, editPrivacypolicy } = require('../controllers/privacypolicyController');
+const { addPrivacypolicy, getPrivacypolicy, searchPrivacypolicy, togglePrivacypolicy, deletePrivacypolicy, editPrivacypolicy, getActiveprivacy } = require('../controllers/privacypolicyController');
 
 
 const router = express.Router();
@@ -15,5 +15,7 @@ router.put('/status/:id', togglePrivacypolicy);
 router.delete('/delete/:id', deletePrivacypolicy);
 
 router.put('/edit/:id', editPrivacypolicy);
+
+router.get('/get-active', getActiveprivacy);
 
 module.exports = router;

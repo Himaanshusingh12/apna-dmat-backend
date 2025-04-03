@@ -161,6 +161,19 @@ const editTermcondition = (req, res) => {
         });
     });
 };
+
+// fetch Active terms & condition in the user dashboard
+const getActivetermcondition = (req, res) => {
+    const sql = "SELECT * FROM manage_termscondition WHERE status = 'Active'";
+    db.query(sql, (err, results) => {
+        if (err) {
+            console.error("Error fetching active terms condition:", err.message);
+            return res.status(500).json({ message: "Failed to fetch active terms condition" });
+        }
+        res.status(200).json({ message: "Active terms condition fetched successfully!", data: results });
+    });
+};
+
 module.exports = {
     addTermscondition,
     getTermscondition,
@@ -168,4 +181,5 @@ module.exports = {
     deleteTermscondition,
     toggleTermcondition,
     editTermcondition,
+    getActivetermcondition,
 }
