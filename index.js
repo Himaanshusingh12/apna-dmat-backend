@@ -36,7 +36,6 @@ app.use(
         maxAge: 3600,
     })
 );
-
 app.use(express.json());
 
 //Serve static files from uploads

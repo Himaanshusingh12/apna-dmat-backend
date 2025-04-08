@@ -17,6 +17,7 @@ router.delete('/delete/:id', deleteBlogcategory);
 
 router.put('/edit/:id', editBlogcategory);
 
-router.get('/category/:blog_id', getBlogsByCategory);
+router.get('/category/:slug', getBlogsByCategory);
+
 
 module.exports = router;

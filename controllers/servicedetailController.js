@@ -146,13 +146,18 @@ const searchservicedetail = (req, res) => {
     });
 };
 
-// Fetch subservices based on service_id
-const getsubservicedetailbySubservice = (req, res) => {
-    const { subservice_id } = req.params;
 
-    // const sql = "SELECT * FROM manage_subservice WHERE service_id = ?";
-    const sql = "SELECT * FROM manage_servicedetails WHERE subservice_id = ? AND status = 'Active'";
-    db.query(sql, [subservice_id], (err, results) => {
+const getsubservicedetailbySubservice = (req, res) => {
+    const { subservice_slug } = req.params;
+
+    // Query to fetch service details by subservice_slug
+    const sql = `
+        SELECT msd.*, ms.title AS subservice_title
+        FROM manage_servicedetails msd
+        JOIN manage_subservice ms ON msd.subservice_id = ms.subservice_id
+        WHERE ms.slug = ? AND msd.status = 'Active'
+    `;
+    db.query(sql, [subservice_slug], (err, results) => {
         if (err) {
             console.error("Error fetching sub service details:", err.message);
             return res.status(500).json({ message: "Failed to fetch sub service details" });
@@ -160,6 +165,7 @@ const getsubservicedetailbySubservice = (req, res) => {
         res.status(200).json({ message: "Service details fetched successfully!", data: results });
     });
 };
+
 
 // Delete Service
 const deleteserviceDetail = (req, res) => {

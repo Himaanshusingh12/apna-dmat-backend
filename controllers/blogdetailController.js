@@ -1,5 +1,6 @@
 const db = require("../config/db");
 const { uploadToCloudinary } = require("../config/cloudinary");
+const slugify = require("slugify");
 
 
 // Add service details
@@ -25,14 +26,17 @@ const addBlogdetails = async (req, res) => {
             return res.status(400).json({ message: "All fields are required" });
         }
 
+        // Generate slug
+        const slug = slugify(title, { lower: true, strict: true });
+
         // Insert into database with Cloudinary image URL
         const insertSql = `
             INSERT INTO manage_blogdetails
-            (blog_id, image,title, description, meta_title, meta_description, meta_keywords) 
-            VALUES (?, ?, ?, ?, ?, ?, ?)
+            (blog_id, image,title, description, meta_title, meta_description, meta_keywords,slug) 
+            VALUES (?, ?, ?, ?, ?, ?, ?,?)
         `;
 
-        db.query(insertSql, [blog_id, imageurl, title, description, meta_title, meta_description, meta_keywords], (insertErr, result) => {
+        db.query(insertSql, [blog_id, imageurl, title, description, meta_title, meta_description, meta_keywords, slug], (insertErr, result) => {
             if (insertErr) {
                 console.error("Database Insert Error:", insertErr.message);
                 return res.status(500).json({ message: "Failed to add blog details", error: insertErr.message });
@@ -170,29 +174,31 @@ const searchBlogdetail = (req, res) => {
 
 // update blog details
 const updateBlogdetail = async (req, res) => {
-    // console.log("Incoming Request Body:", req.body);
-    // console.log("Incoming File:", req.file);
-
     try {
         const { title, description, meta_title, meta_description, meta_keywords } = req.body;
         const { id } = req.params;
+
+        // Generate slug from title
+        const slug = slugify(title, { lower: true, strict: true });
 
         let imageUrl = null;
         if (req.file) {
             console.log("Uploading image to Cloudinary...");
             const result = await uploadToCloudinary(req.file.buffer);
             imageUrl = result.secure_url;
-            // console.log("Uploaded Image URL:", imageUrl);
         }
 
         // Update in Database
         const sql = `
             UPDATE manage_blogdetails
-            SET title = ?, description = ?, meta_title = ?, meta_description = ? , meta_keywords = ? ${imageUrl ? ", image = ?" : ""}
+            SET title = ?, description = ?, meta_title = ?, meta_description = ?, meta_keywords = ?, slug = ?
+            ${imageUrl ? ", image = ?" : ""}
             WHERE blogdetail_id = ?
         `;
 
-        const values = imageUrl ? [title, description, meta_title, meta_description, meta_keywords, imageUrl, id] : [title, description, meta_title, meta_description, meta_keywords, id];
+        const values = imageUrl
+            ? [title, description, meta_title, meta_description, meta_keywords, slug, imageUrl, id]
+            : [title, description, meta_title, meta_description, meta_keywords, slug, id];
 
         db.query(sql, values, (err, result) => {
             if (err) {
@@ -209,42 +215,29 @@ const updateBlogdetail = async (req, res) => {
 };
 
 
-// Fetch subservices based on service_id
-const getblogdetailbyBlogcategory = (req, res) => {
-    const { blog_id } = req.params;
-
-    const sql = "SELECT * FROM manage_blogdetails WHERE blog_id = ? AND status = 'Active'";
-    db.query(sql, [blog_id], (err, results) => {
-        if (err) {
-            console.error("Error fetching sub service details:", err.message);
-            return res.status(500).json({ message: "Failed to fetch sub service details" });
-        }
-        res.status(200).json({ message: "Service details fetched successfully!", data: results });
-    });
-};
-
-// get blog full details in the user dashboard
-const getBlogfullDetails = (req, res) => {
-    const { blogdetail_id } = req.params;
+// Get single blog detail by slug for user dashboard
+const getBlogdetailBySlug = (req, res) => {
+    const { slug } = req.params;
 
     const sql = `
         SELECT * FROM manage_blogdetails 
-        WHERE blogdetail_id = ? AND status = 'Active'
+        WHERE slug = ? AND status = 'Active'
     `;
-
-    db.query(sql, [blogdetail_id], (err, result) => {
+    db.query(sql, [slug], (err, results) => {
         if (err) {
-            console.error("Error fetching blog details:", err.message);
-            return res.status(500).json({ message: "Failed to fetch blog details" });
+            console.error("Error fetching blog detail by slug:", err.message);
+            return res.status(500).json({ message: "Failed to fetch blog detail" });
         }
 
-        if (result.length === 0) {
+        if (results.length === 0) {
             return res.status(404).json({ message: "Blog not found" });
         }
 
-        res.status(200).json({ message: "Blog details fetched successfully", data: result[0] });
+        res.status(200).json({ message: "Blog fetched successfully", data: results[0] });
     });
 };
+
+
 
 module.exports = {
     addBlogdetails,
@@ -253,5 +246,5 @@ module.exports = {
     toggleBlogdetail,
     searchBlogdetail,
     updateBlogdetail,
-    getBlogfullDetails,
+    getBlogdetailBySlug,
 }

@@ -12,7 +12,7 @@ router.put('/status/:id', toggleserviceDetail);
 
 router.get('/search', searchservicedetail);
 
-router.get('/subservice-detail/:subservice_id', getsubservicedetailbySubservice);
+router.get('/subservice-detail/:subservice_slug', getsubservicedetailbySubservice);
 
 router.delete('/delete/:id', deleteserviceDetail);
 

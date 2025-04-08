@@ -1,4 +1,5 @@
 const db = require('../config/db');
+const slugify = require("slugify");
 
 //  Add Service
 const addService = (req, res) => {
@@ -7,15 +8,21 @@ const addService = (req, res) => {
         return res.status(400).json({ message: 'All fields are required!' });
     }
 
-    const sql = 'INSERT INTO manage_service (icon,title,description) VALUES (?, ?,?)';
-    db.query(sql, [icon, title, description], (err, result) => {
+    const slug = slugify(title, { lower: true, strict: true });
+
+    const sql = 'INSERT INTO manage_service (icon, title, slug, description) VALUES (?, ?, ?, ?)';
+    db.query(sql, [icon, title, slug, description], (err, result) => {
         if (err) {
             console.error("Error inserting data:", err.message);
             return res.status(500).json({ message: 'Failed to insert data' });
         }
-        res.status(201).json({ message: 'Service added successfully!', data: { id: result.insertId, icon, title, description } });
+        res.status(201).json({
+            message: 'Service added successfully!',
+            data: { id: result.insertId, icon, title, slug, description }
+        });
     });
 };
+
 
 // get All services (Active/Inactive) in the admin dashboard with pagination functionality.
 const getService = (req, res) => {
@@ -140,7 +147,7 @@ const deleteService = (req, res) => {
     });
 };
 
-// Edit service
+//Edit service
 const editService = (req, res) => {
     const serviceId = req.params.id;
     const { icon, title, description } = req.body;
@@ -148,6 +155,8 @@ const editService = (req, res) => {
     if (!icon || !title || !description) {
         return res.status(400).json({ message: "All fields are required!" });
     }
+
+    const slug = slugify(title, { lower: true, strict: true });
 
     // Check if service exists
     const checkServiceQuery = "SELECT * FROM manage_service WHERE service_id = ?";
@@ -160,9 +169,9 @@ const editService = (req, res) => {
             return res.status(404).json({ message: "Service not found!" });
         }
 
-        // Update service
-        const updateQuery = "UPDATE manage_service SET icon = ?, title = ?, description = ? WHERE service_id = ?";
-        db.query(updateQuery, [icon, title, description, serviceId], (updateErr) => {
+        // Update service with new slug
+        const updateQuery = "UPDATE manage_service SET icon = ?, title = ?, slug = ?, description = ? WHERE service_id = ?";
+        db.query(updateQuery, [icon, title, slug, description, serviceId], (updateErr) => {
             if (updateErr) {
                 console.error("Error updating service:", updateErr.message);
                 return res.status(500).json({ message: "Failed to update service" });

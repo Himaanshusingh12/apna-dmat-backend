@@ -1,5 +1,5 @@
 const db = require('../config/db');
-
+const slugify = require('slugify');
 
 //  Add Service
 const addsubService = (req, res) => {
@@ -8,15 +8,21 @@ const addsubService = (req, res) => {
         return res.status(400).json({ message: 'All fields are required!' });
     }
 
-    const sql = 'INSERT INTO manage_subservice (service_id,icon,title,description) VALUES (?, ?,?,?)';
-    db.query(sql, [service_id, icon, title, description], (err, result) => {
+    const slug = slugify(title, { lower: true });
+
+    const sql = 'INSERT INTO manage_subservice (service_id, icon, title, slug, description) VALUES (?, ?, ?, ?, ?)';
+    db.query(sql, [service_id, icon, title, slug, description], (err, result) => {
         if (err) {
             console.error("Error inserting data:", err.message);
             return res.status(500).json({ message: 'Failed to insert data' });
         }
-        res.status(201).json({ message: 'Service added successfully!', data: { id: result.insertId, service_id, icon, title, description } });
+        res.status(201).json({
+            message: 'Service added successfully!',
+            data: { id: result.insertId, service_id, icon, title, slug, description }
+        });
     });
 };
+
 
 // get All sub services (Active/Inactive) in the admin dashboard with pagination functionality.
 const getsubService = (req, res) => {
@@ -123,20 +129,6 @@ const searchsubService = (req, res) => {
     });
 };
 
-// Fetch subservices based on service_id
-const getSubservicesByService = (req, res) => {
-    const { service_id } = req.params;
-    // const sql = "SELECT * FROM manage_subservice WHERE service_id = ?";
-    const sql = "SELECT * FROM manage_subservice WHERE service_id = ? AND status = 'Active'";
-    db.query(sql, [service_id], (err, results) => {
-        if (err) {
-            console.error("Error fetching subservices:", err.message);
-            return res.status(500).json({ message: "Failed to fetch subservices" });
-        }
-        res.status(200).json({ message: "Subservices fetched successfully!", data: results });
-    });
-};
-
 // Delete subService
 const deletesubService = (req, res) => {
     const subserviceId = req.params.id;
@@ -166,7 +158,8 @@ const editsubService = (req, res) => {
         return res.status(400).json({ message: "All fields are required!" });
     }
 
-    // Check if service exists
+    const slug = slugify(title, { lower: true });
+
     const checkServiceQuery = "SELECT * FROM manage_subservice WHERE subservice_id = ?";
     db.query(checkServiceQuery, [subserviceId], (err, results) => {
         if (err) {
@@ -177,9 +170,8 @@ const editsubService = (req, res) => {
             return res.status(404).json({ message: "Sub service not found!" });
         }
 
-        // Update service
-        const updateQuery = "UPDATE manage_subservice SET icon = ?, title = ?, description = ? WHERE subservice_id = ?";
-        db.query(updateQuery, [icon, title, description, subserviceId], (updateErr) => {
+        const updateQuery = "UPDATE manage_subservice SET icon = ?, title = ?, slug = ?, description = ? WHERE subservice_id = ?";
+        db.query(updateQuery, [icon, title, slug, description, subserviceId], (updateErr) => {
             if (updateErr) {
                 console.error("Error updating sub service:", updateErr.message);
                 return res.status(500).json({ message: "Failed to update sub service" });
@@ -190,6 +182,25 @@ const editsubService = (req, res) => {
     });
 };
 
+// Fetch subservices based on service slug
+const getSubservicesBySlug = (req, res) => {
+    const { slug } = req.params; // Getting the slug from the URL parameters
+
+    const sql = `
+        SELECT * 
+        FROM manage_subservice 
+        WHERE service_id IN (SELECT service_id FROM manage_service WHERE slug = ?)
+        AND status = 'Active'
+    `;
+    db.query(sql, [slug], (err, results) => {
+        if (err) {
+            console.error("Error fetching subservices:", err.message);
+            return res.status(500).json({ message: "Failed to fetch subservices" });
+        }
+        res.status(200).json({ message: "Subservices fetched successfully!", data: results });
+    });
+};
+
 
 module.exports = {
     addsubService,
@@ -197,7 +208,7 @@ module.exports = {
     getActivesubService,
     togglesubService,
     searchsubService,
-    getSubservicesByService,
     deletesubService,
     editsubService,
+    getSubservicesBySlug,
 };

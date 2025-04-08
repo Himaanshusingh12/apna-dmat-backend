@@ -1,33 +1,35 @@
 const db = require("../config/db");
-const path = require("path");
-const multer = require("multer");
+const { uploadToCloudinary } = require("../config/cloudinary");
 
-// Set up storage for file uploads
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        cb(null, "uploads/");
-    },
-    filename: (req, file, cb) => {
-        cb(null, Date.now() + path.extname(file.originalname));
-    },
-});
 
-// Multer middleware for handling file uploads
-const upload = multer({ storage }).fields([
-    { name: "logo" },
-    { name: "favicon" },
-]);
-
-const uploadFiles = (req, res) => {
+// for add new data
+const uploadFiles = async (req, res) => {
     try {
-        const logoPath = req.files["logo"] ? `/uploads/${req.files["logo"][0].filename}` : null;
-        const faviconPath = req.files["favicon"] ? `/uploads/${req.files["favicon"][0].filename}` : null;
-
-        // Extract other form fields
+        // Extract form data
         const {
             email_one, email_two, address, mobile_number, copyright,
             map_iframe, facebook, linkedin, twitter, instagram, youtube
         } = req.body;
+
+        // Upload new logo & favicon to Cloudinary (if provided)
+        let logoPath = null;
+        let faviconPath = null;
+
+        if (req.files["logo"]) {
+            const logoUpload = await uploadToCloudinary(req.files["logo"][0].buffer);
+            if (!logoUpload || !logoUpload.secure_url) {
+                return res.status(500).json({ message: "Failed to upload logo to Cloudinary" });
+            }
+            logoPath = logoUpload.secure_url;
+        }
+
+        if (req.files["favicon"]) {
+            const faviconUpload = await uploadToCloudinary(req.files["favicon"][0].buffer);
+            if (!faviconUpload || !faviconUpload.secure_url) {
+                return res.status(500).json({ message: "Failed to upload favicon to Cloudinary" });
+            }
+            faviconPath = faviconUpload.secure_url;
+        }
 
         // Check if settings already exist
         const checkSql = "SELECT * FROM manage_accountsettings LIMIT 1";
@@ -38,6 +40,7 @@ const uploadFiles = (req, res) => {
             }
 
             if (results.length > 0) {
+                // Update existing record
                 const existing = results[0];
 
                 const updatedData = {
@@ -58,10 +61,11 @@ const uploadFiles = (req, res) => {
 
                 const updateSql = `
                     UPDATE manage_accountsettings 
-                    SET logo=?, favicon=?, email_one=?, email_two=?,address=?, mobile_number=?, 
+                    SET logo=?, favicon=?, email_one=?, email_two=?, address=?, mobile_number=?, 
                         copyright=?, map_iframe=?, facebook=?, linkedin=?, twitter=?, 
                         instagram=?, youtube=? 
-                    WHERE id=?`;
+                    WHERE id=?
+                `;
 
                 db.query(updateSql, [
                     updatedData.logo, updatedData.favicon, updatedData.email_one, updatedData.email_two, updatedData.address,
@@ -77,10 +81,12 @@ const uploadFiles = (req, res) => {
                 });
 
             } else {
+                // Insert new record
                 const insertSql = `
                     INSERT INTO manage_accountsettings 
-                    (logo, favicon, email_one, email_two,address, mobile_number, copyright, map_iframe, facebook, linkedin, twitter, instagram, youtube) 
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?)`;
+                    (logo, favicon, email_one, email_two, address, mobile_number, copyright, map_iframe, facebook, linkedin, twitter, instagram, youtube) 
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                `;
 
                 db.query(insertSql, [
                     logoPath, faviconPath, email_one, email_two, address, mobile_number,
@@ -96,7 +102,8 @@ const uploadFiles = (req, res) => {
         });
 
     } catch (error) {
-        return res.status(500).json({ message: "File upload failed" });
+        console.error("Error:", error.message);
+        return res.status(500).json({ message: "File upload failed", error: error.message });
     }
 };
 
@@ -117,4 +124,4 @@ const getAccountsetting = (req, res) => {
         res.status(200).json({ message: 'Account settings fetched successfully!', data: results });
     });
 };
-module.exports = { upload, uploadFiles, getAccountsetting };
+module.exports = { uploadFiles, getAccountsetting };

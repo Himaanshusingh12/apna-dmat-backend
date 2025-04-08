@@ -1,20 +1,23 @@
 const db = require('../config/db');
+const slugify = require("slugify");
 
 
-//  Add Service
+//  Add blog category
 const addBlogcategory = (req, res) => {
     const { category } = req.body;
     if (!category) {
         return res.status(400).json({ message: 'All fields are required!' });
     }
 
-    const sql = 'INSERT INTO manage_blog (category) VALUES (?)';
-    db.query(sql, [category], (err, result) => {
+    const slug = slugify(category, { lower: true, strict: true });
+
+    const sql = 'INSERT INTO manage_blog (category,slug) VALUES (?,?)';
+    db.query(sql, [category, slug], (err, result) => {
         if (err) {
             console.error("Error inserting data:", err.message);
             return res.status(500).json({ message: 'Failed to insert data' });
         }
-        res.status(201).json({ message: 'Blog category added successfully!', data: { id: result.insertId, category } });
+        res.status(201).json({ message: 'Blog category added successfully!', data: { id: result.insertId, category, slug } });
     });
 };
 
@@ -139,6 +142,8 @@ const editBlogcategory = (req, res) => {
         return res.status(400).json({ message: "All fields are required!" });
     }
 
+    const slug = slugify(category, { lower: true, strict: true });
+
     // Check if service exists
     const checkServiceQuery = "SELECT * FROM manage_blog WHERE blog_id = ?";
     db.query(checkServiceQuery, [blogcategoryId], (err, results) => {
@@ -151,8 +156,8 @@ const editBlogcategory = (req, res) => {
         }
 
         // Update service
-        const updateQuery = "UPDATE manage_blog SET  category = ? WHERE blog_id = ?";
-        db.query(updateQuery, [category, blogcategoryId], (updateErr) => {
+        const updateQuery = "UPDATE manage_blog SET  category = ?, slug = ? WHERE blog_id = ?";
+        db.query(updateQuery, [category, slug, blogcategoryId], (updateErr) => {
             if (updateErr) {
                 console.error("Error updating blog category:", updateErr.message);
                 return res.status(500).json({ message: "Failed to update blog category" });
@@ -175,22 +180,36 @@ const getActiveblogcategory = (req, res) => {
     });
 };
 
-// Fetch Blogs by Category for User Dashboard
-const getBlogsByCategory = (req, res) => {
-    const { blog_id } = req.params;
-    const sql = `
-        SELECT blogdetail_id, title, image, description 
-        FROM manage_blogdetails 
-        WHERE blog_id = ? AND status = 'Active'
-    `;
 
-    db.query(sql, [blog_id], (err, results) => {
+// Fetch Blogs by Category (using slug) for User Dashboard
+const getBlogsByCategory = (req, res) => {
+    const { slug } = req.params;
+
+    const getCategoryIdQuery = 'SELECT blog_id FROM manage_blog WHERE slug = ? AND status = "Active"';
+    db.query(getCategoryIdQuery, [slug], (err, result) => {
         if (err) {
-            console.error("Error fetching blogs:", err.message);
-            return res.status(500).json({ message: "Failed to fetch blogs" });
+            console.error("Error getting category ID:", err.message);
+            return res.status(500).json({ message: "Failed to get blog category" });
         }
 
-        res.status(200).json({ message: "Blogs fetched successfully!", data: results });
+        if (result.length === 0) {
+            return res.status(404).json({ message: "Blog category not found" });
+        }
+
+        const blog_id = result[0].blog_id;
+
+        const sql = `
+            SELECT blogdetail_id, slug, title, image, description 
+            FROM manage_blogdetails 
+            WHERE blog_id = ? AND status = 'Active'
+        `;
+        db.query(sql, [blog_id], (err2, results) => {
+            if (err2) {
+                console.error("Error fetching blogs:", err2.message);
+                return res.status(500).json({ message: "Failed to fetch blogs" });
+            }
+            res.status(200).json({ message: "Blogs fetched successfully!", data: results });
+        });
     });
 };
 
