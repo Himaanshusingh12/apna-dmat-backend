@@ -1,0 +1,133 @@
+<!-- this code is for server -->
+<!-- // Allow only the deployed frontend URLs
+const allowedOrigins = [
+    process.env.FRONTEND_URL,
+    process.env.ADMIN_FRONTEND_URL,
+];
+
+app.use(
+    cors({
+        origin: function (origin, callback) {
+            if (allowedOrigins.includes(origin)) {
+                return callback(null, true);
+            }
+            return callback(new Error("Not allowed by CORS"), false);
+        },
+        methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
+        allowedHeaders: ["Content-Type", "Authorization"],
+        credentials: true,
+        maxAge: 3600,
+    })
+);
+); -->
+
+<!-- this is for local -->
+<!-- app.use(cors({
+    origin: function (or
+app.use(express.json()igin, callback) {
+        if (!origin) return callback(null, true);
+
+        // Allow localhost on any port during development
+        if (origin.startsWith("http://localhost")) {
+            return callback(null, true);
+        }
+
+        if (process.env.FRONTEND_URL && origin === process.env.FRONTEND_URL) {
+            return callback(null, true);
+        }
+
+        return callback(new Error("Not allowed by CORS"), false);
+    },
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+    credentials: true,
+    maxAge: 3600,
+}));
+
+app.use(express.json()); -->
+
+<!-- blog details routes  -->
+<!-- // // Fetch subservices based on service_id
+// const getblogdetailbyBlogcategory = (req, res) => {
+//     const { slug } = req.params;
+
+//     const sql = "SELECT * FROM manage_blogdetails WHERE blog_id = ? AND status = 'Active'";
+//     db.query(sql, [slug], (err, results) => {
+//         if (err) {
+//             console.error("Error fetching sub service details:", err.message);
+//             return res.status(500).json({ message: "Failed to fetch sub service details" });
+//         }
+//         res.status(200).json({ message: "Service details fetched successfully!", data: results });
+//     });
+// };
+
+
+// // get blog full details in the user dashboard (fetch by slug)
+const getBlogfullDetails = (req, res) => {
+    const { slug } = req.params;
+
+    console.log("The slug is", slug)
+
+    const sql = `
+        SELECT * FROM manage_blogdetails 
+        WHERE slug = ? AND status = 'Active'
+    `;
+
+    db.query(sql, [slug], (err, result) => {
+        if (err) {
+            console.error("Error fetching blog details:", err.message);
+            return res.status(500).json({ message: "Failed to fetch blog details" });
+        }
+
+        if (result.length === 0) {
+            return res.status(404).json({ message: "Blog not found" });
+        }
+
+        res.status(200).json({ message: "Blog details fetched successfully", data: result[0] });
+    });
+}; -->
+
+<!-- app.use(cors({
+    origin: function (origin, callback) {
+        if (!origin) return callback(null, true);
+
+        // Allow localhost on any port during development
+        if (origin.startsWith("http://localhost")) {
+            return callback(null, true);
+        }
+
+        if (process.env.FRONTEND_URL && origin === process.env.FRONTEND_URL) {
+            return callback(null, true);
+        }
+
+        return callback(new Error("Not allowed by CORS"), false);
+    },
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+    credentials: true,
+    maxAge: 3600,
+}));
+
+app.use(express.json()); -->
+
+<!-- for the local -->
+<!-- app.use(cors({
+    origin: function (origin, callback) {
+        if (!origin) return callback(null, true);
+
+        // Allow localhost on any port during development
+        if (origin.startsWith("http://localhost")) {
+            return callback(null, true);
+        }
+
+        if (process.env.FRONTEND_URL && origin === process.env.FRONTEND_URL) {
+            return callback(null, true);
+        }
+
+        return callback(new Error("Not allowed by CORS"), false);
+    },
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+    credentials: true,
+    maxAge: 3600,
+})); -->
