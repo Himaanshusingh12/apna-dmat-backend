@@ -1,24 +1,51 @@
 const db = require('../config/db');
 const slugify = require("slugify");
+const { uploadToCloudinary } = require("../config/cloudinary");
 
 
 //  Add blog category
-const addBlogcategory = (req, res) => {
-    const { category } = req.body;
-    if (!category) {
-        return res.status(400).json({ message: 'All fields are required!' });
-    }
+const addBlogcategory = async (req, res) => {
+    try {
+        const { category } = req.body;
 
-    const slug = slugify(category, { lower: true, strict: true });
-
-    const sql = 'INSERT INTO manage_blog (category,slug) VALUES (?,?)';
-    db.query(sql, [category, slug], (err, result) => {
-        if (err) {
-            console.error("Error inserting data:", err.message);
-            return res.status(500).json({ message: 'Failed to insert data' });
+        if (!category) {
+            return res.status(400).json({ message: 'Category field is required!' });
         }
-        res.status(201).json({ message: 'Blog category added successfully!', data: { id: result.insertId, category, slug } });
-    });
+
+        if (!req.file) {
+            return res.status(400).json({ message: 'Image file is required!' });
+        }
+
+        // Upload image to Cloudinary
+        const uploadResponse = await uploadToCloudinary(req.file.buffer);
+        if (!uploadResponse || !uploadResponse.secure_url) {
+            return res.status(500).json({ message: 'Failed to upload image to Cloudinary' });
+        }
+
+        const slug = slugify(category, { lower: true, strict: true });
+        const imageUrl = uploadResponse.secure_url;
+
+        const sql = 'INSERT INTO manage_blog (category, slug, image) VALUES (?, ?, ?)';
+        db.query(sql, [category, slug, imageUrl], (err, result) => {
+            if (err) {
+                console.error("Error inserting data:", err.message);
+                return res.status(500).json({ message: 'Failed to insert data' });
+            }
+
+            res.status(201).json({
+                message: 'Blog category added successfully!',
+                data: {
+                    id: result.insertId,
+                    category,
+                    slug,
+                    image: imageUrl,
+                },
+            });
+        });
+    } catch (error) {
+        console.error("Server error:", error.message);
+        res.status(500).json({ message: 'Internal server error', error: error.message });
+    }
 };
 
 
@@ -133,8 +160,8 @@ const deleteBlogcategory = (req, res) => {
     });
 };
 
-// Edit service
-const editBlogcategory = (req, res) => {
+// Edit blog category
+const editBlogcategory = async (req, res) => {
     const blogcategoryId = req.params.id;
     const { category } = req.body;
 
@@ -144,28 +171,49 @@ const editBlogcategory = (req, res) => {
 
     const slug = slugify(category, { lower: true, strict: true });
 
-    // Check if service exists
-    const checkServiceQuery = "SELECT * FROM manage_blog WHERE blog_id = ?";
-    db.query(checkServiceQuery, [blogcategoryId], (err, results) => {
-        if (err) {
-            console.error("Error checking blog category:", err.message);
-            return res.status(500).json({ message: "Database error" });
-        }
-        if (results.length === 0) {
-            return res.status(404).json({ message: "Blog category not found!" });
+    try {
+        let imageUrl = null;
+
+        if (req.file) {
+            console.log("Uploading blog category image to Cloudinary...");
+            const result = await uploadToCloudinary(req.file.buffer);
+            imageUrl = result.secure_url;
         }
 
-        // Update service
-        const updateQuery = "UPDATE manage_blog SET  category = ?, slug = ? WHERE blog_id = ?";
-        db.query(updateQuery, [category, slug, blogcategoryId], (updateErr) => {
-            if (updateErr) {
-                console.error("Error updating blog category:", updateErr.message);
-                return res.status(500).json({ message: "Failed to update blog category" });
+        // Check if blog category exists
+        const checkQuery = "SELECT * FROM manage_blog WHERE blog_id = ?";
+        db.query(checkQuery, [blogcategoryId], (err, results) => {
+            if (err) {
+                console.error("Database check error:", err.message);
+                return res.status(500).json({ message: "Database error" });
             }
 
-            res.status(200).json({ message: "Blog category updated successfully!" });
+            if (results.length === 0) {
+                return res.status(404).json({ message: "Blog category not found!" });
+            }
+
+            // Build update query dynamically
+            const updateQuery = `
+                UPDATE manage_blog 
+                SET category = ?, slug = ? ${imageUrl ? ', image = ?' : ''} 
+                WHERE blog_id = ?
+            `;
+            const values = imageUrl ? [category, slug, imageUrl, blogcategoryId] : [category, slug, blogcategoryId];
+
+            db.query(updateQuery, values, (updateErr) => {
+                if (updateErr) {
+                    console.error("Update error:", updateErr.message);
+                    return res.status(500).json({ message: "Failed to update blog category" });
+                }
+
+                res.status(200).json({ message: "Blog category updated successfully!" });
+            });
         });
-    });
+
+    } catch (error) {
+        console.error("Image upload or update error:", error);
+        res.status(500).json({ message: "Server error during update" });
+    }
 };
 
 // Fetch only Active Blog category (For User Dashboard)

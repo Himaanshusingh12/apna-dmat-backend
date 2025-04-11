@@ -188,8 +188,6 @@ const deleteserviceDetail = (req, res) => {
 
 // update service details
 const updateserviceDetail = async (req, res) => {
-    // console.log("Incoming Request Body:", req.body);
-    // console.log("Incoming File:", req.file);
 
     try {
         const { sort_description, description } = req.body;

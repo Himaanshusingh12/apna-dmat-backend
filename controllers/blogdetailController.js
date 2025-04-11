@@ -20,9 +20,10 @@ const addBlogdetails = async (req, res) => {
         // console.log("Uploaded Image URL:", imageurl);
 
         // Extract other form fields
-        const { blog_id, title, description, meta_title, meta_description, meta_keywords } = req.body;
+        const { blog_id, title, description, meta_title = "", meta_description = "", meta_keywords = "" } = req.body;
 
-        if (!blog_id || !title || !description || !meta_title || !meta_description || !meta_keywords) {
+
+        if (!blog_id || !title || !description) {
             return res.status(400).json({ message: "All fields are required" });
         }
 
@@ -94,7 +95,7 @@ const getblogDetail = (req, res) => {
     });
 };
 
-// Delete Service
+// Delete blogdetails
 const deleteBlogdetail = (req, res) => {
     const blogdetailId = req.params.id;
     const sql = 'DELETE FROM manage_blogdetails WHERE blogdetail_id = ?';
@@ -175,30 +176,41 @@ const searchBlogdetail = (req, res) => {
 // update blog details
 const updateBlogdetail = async (req, res) => {
     try {
-        const { title, description, meta_title, meta_description, meta_keywords } = req.body;
+        const { title, description, slug, meta_title, meta_description, meta_keywords, } = req.body;
         const { id } = req.params;
 
-        // Generate slug from title
-        const slug = slugify(title, { lower: true, strict: true });
-
         let imageUrl = null;
+
         if (req.file) {
             console.log("Uploading image to Cloudinary...");
             const result = await uploadToCloudinary(req.file.buffer);
             imageUrl = result.secure_url;
         }
 
-        // Update in Database
-        const sql = `
-            UPDATE manage_blogdetails
-            SET title = ?, description = ?, meta_title = ?, meta_description = ?, meta_keywords = ?, slug = ?
-            ${imageUrl ? ", image = ?" : ""}
-            WHERE blogdetail_id = ?
-        `;
+        // Build SQL and values array dynamically
+        let sql = `UPDATE manage_blogdetails SET title = ?, description = ?, slug = ?`;
+        let values = [title, description, slug];
 
-        const values = imageUrl
-            ? [title, description, meta_title, meta_description, meta_keywords, slug, imageUrl, id]
-            : [title, description, meta_title, meta_description, meta_keywords, slug, id];
+        if (meta_title !== undefined) {
+            sql += `, meta_title = ?`;
+            values.push(meta_title);
+        }
+        if (meta_description !== undefined) {
+            sql += `, meta_description = ?`;
+            values.push(meta_description);
+        }
+        if (meta_keywords !== undefined) {
+            sql += `, meta_keywords = ?`;
+            values.push(meta_keywords);
+        }
+
+        if (imageUrl) {
+            sql += `, image = ?`;
+            values.push(imageUrl);
+        }
+
+        sql += ` WHERE blogdetail_id = ?`;
+        values.push(id);
 
         db.query(sql, values, (err, result) => {
             if (err) {
@@ -213,6 +225,8 @@ const updateBlogdetail = async (req, res) => {
         res.status(500).json({ error: "Server error during update" });
     }
 };
+
+
 
 
 // Get single blog detail by slug for user dashboard
