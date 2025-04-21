@@ -1,5 +1,5 @@
 const express = require('express');
-const { addBlogcategory, getBlogcategory, searchBlogcategory, toggleBlogcategory, deleteBlogcategory, editBlogcategory, getActiveblogcategory, getBlogsByCategory } = require('../controllers/BlogController');
+const { addBlogcategory, getBlogcategory, searchBlogcategory, toggleBlogcategory, deleteBlogcategory, editBlogcategory, getActiveblogcategory, getBlogsByCategory, getCategorySeoBySlug } = require('../controllers/BlogController');
 const upload = require('../config/multer');
 
 const router = express.Router();
@@ -20,5 +20,7 @@ router.put('/edit/:id', upload.single("image"), editBlogcategory);
 
 router.get('/category/:slug', getBlogsByCategory);
 
+
+router.get('/seo/:slug', getCategorySeoBySlug);
 
 module.exports = router;

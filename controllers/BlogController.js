@@ -293,6 +293,22 @@ const getBlogsByCategory = (req, res) => {
 };
 
 
+const getCategorySeoBySlug = (req, res) => {
+    const slug = req.params.slug;
+    const query = "SELECT meta_title, meta_description, meta_keywords FROM manage_blog WHERE slug = ? AND status = 'Active'";
+
+    db.query(query, [slug], (err, result) => {
+        if (err) {
+            return res.status(500).json({ message: "Database error", error: err });
+        }
+        if (result.length === 0) {
+            return res.status(404).json({ message: "Category not found" });
+        }
+        res.status(200).json({ data: result[0] });
+    });
+};
+
+
 module.exports = {
     addBlogcategory,
     getBlogcategory,
@@ -302,6 +318,7 @@ module.exports = {
     editBlogcategory,
     getActiveblogcategory,
     getBlogsByCategory,
+    getCategorySeoBySlug,
 };
 
 
