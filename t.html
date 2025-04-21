@@ -46,47 +46,6 @@ app.use(express.json()igin, callback) {
 
 app.use(express.json()); -->
 
-<!-- blog details routes  -->
-<!-- // // Fetch subservices based on service_id
-// const getblogdetailbyBlogcategory = (req, res) => {
-//     const { slug } = req.params;
-
-//     const sql = "SELECT * FROM manage_blogdetails WHERE blog_id = ? AND status = 'Active'";
-//     db.query(sql, [slug], (err, results) => {
-//         if (err) {
-//             console.error("Error fetching sub service details:", err.message);
-//             return res.status(500).json({ message: "Failed to fetch sub service details" });
-//         }
-//         res.status(200).json({ message: "Service details fetched successfully!", data: results });
-//     });
-// };
-
-
-// // get blog full details in the user dashboard (fetch by slug)
-const getBlogfullDetails = (req, res) => {
-    const { slug } = req.params;
-
-    console.log("The slug is", slug)
-
-    const sql = `
-        SELECT * FROM manage_blogdetails 
-        WHERE slug = ? AND status = 'Active'
-    `;
-
-    db.query(sql, [slug], (err, result) => {
-        if (err) {
-            console.error("Error fetching blog details:", err.message);
-            return res.status(500).json({ message: "Failed to fetch blog details" });
-        }
-
-        if (result.length === 0) {
-            return res.status(404).json({ message: "Blog not found" });
-        }
-
-        res.status(200).json({ message: "Blog details fetched successfully", data: result[0] });
-    });
-}; -->
-
 <!-- app.use(cors({
     origin: function (origin, callback) {
         if (!origin) return callback(null, true);
@@ -110,7 +69,7 @@ const getBlogfullDetails = (req, res) => {
 
 app.use(express.json()); -->
 
-<!-- for the local -->
+<!-- new one for the local  -->
 <!-- app.use(cors({
     origin: function (origin, callback) {
         if (!origin) return callback(null, true);
