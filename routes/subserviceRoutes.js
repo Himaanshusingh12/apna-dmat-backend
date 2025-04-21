@@ -1,5 +1,5 @@
 const express = require('express');
-const { addsubService, getsubService, togglesubService, searchsubService, getActivesubService, deletesubService, editsubService, getSubservicesBySlug } = require('../controllers/subserviceController');
+const { addsubService, getsubService, togglesubService, searchsubService, getActivesubService, deletesubService, editsubService, getSubservicesBySlug, getserviceSeoBySlug } = require('../controllers/subserviceController');
 
 
 const router = express.Router();
@@ -19,5 +19,8 @@ router.delete('/delete-subservice/:id', deletesubService);
 router.put('/edit-subservice/:id', editsubService);
 
 router.get('/subservices/:slug', getSubservicesBySlug);
+
+router.get('/seo/:slug', getserviceSeoBySlug);
+
 
 module.exports = router;

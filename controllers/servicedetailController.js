@@ -18,7 +18,7 @@ const addServiceDetails = async (req, res) => {
         // console.log("Uploaded Image URL:", imageurl);
 
         // Extract other form fields
-        const { subservice_id, sort_description, description } = req.body;
+        const { subservice_id, sort_description, description, meta_title, meta_description, meta_keywords } = req.body;
 
         if (!subservice_id || !sort_description || !description) {
             return res.status(400).json({ message: "All fields are required" });
@@ -27,11 +27,11 @@ const addServiceDetails = async (req, res) => {
         // Insert into database with Cloudinary image URL
         const insertSql = `
             INSERT INTO manage_servicedetails
-            (subservice_id, image, sort_description, description) 
-            VALUES (?, ?, ?, ?)
+            (subservice_id, image, sort_description, description, meta_title, meta_description, meta_keywords) 
+            VALUES (?, ?, ?, ?, ?, ?, ?)
         `;
 
-        db.query(insertSql, [subservice_id, imageurl, sort_description, description], (insertErr, result) => {
+        db.query(insertSql, [subservice_id, imageurl, sort_description, description, meta_title || null, meta_description || null, meta_keywords || null], (insertErr, result) => {
             if (insertErr) {
                 console.error("Database Insert Error:", insertErr.message);
                 return res.status(500).json({ message: "Failed to add service details", error: insertErr.message });
@@ -190,7 +190,7 @@ const deleteserviceDetail = (req, res) => {
 const updateserviceDetail = async (req, res) => {
 
     try {
-        const { sort_description, description } = req.body;
+        const { sort_description, description, meta_title, meta_description, meta_keywords } = req.body;
         const { id } = req.params;
 
         let imageUrl = null;
@@ -201,14 +201,19 @@ const updateserviceDetail = async (req, res) => {
             // console.log("Uploaded Image URL:", imageUrl);
         }
 
-        // Update in Database
-        const sql = `
-            UPDATE manage_servicedetails
-            SET sort_description = ?, description = ? ${imageUrl ? ", image = ?" : ""}
-            WHERE servicedetails_id = ?
-        `;
+        let sql = `
+        UPDATE manage_servicedetails
+        SET sort_description = ?, description = ?, meta_title = ?, meta_description = ?, meta_keywords = ?
+    `;
+        const values = [sort_description, description, meta_title || null, meta_description || null, meta_keywords || null];
 
-        const values = imageUrl ? [sort_description, description, imageUrl, id] : [sort_description, description, id];
+        if (imageUrl) {
+            sql += `, image = ?`;
+            values.push(imageUrl);
+        }
+
+        sql += ` WHERE servicedetails_id = ?`;
+        values.push(id);
 
         db.query(sql, values, (err, result) => {
             if (err) {
