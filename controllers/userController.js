@@ -17,18 +17,6 @@ const addUser = (req, res) => {
     });
 };
 
-// // get all users
-// const getAllUsers = (req, res) => {
-//     const sql = 'SELECT * FROM manage_customer';
-//     db.query(sql, (err, results) => {
-//         if (err) {
-//             console.error("Error fetching data:", err.message);
-//             return res.status(500).json({ message: 'Failed to fetch data' });
-//         }
-//         res.status(200).json({ message: 'Users fetched successfully!', data: results });
-//     });
-// };
-
 // new one with pagination
 const getAllUsers = (req, res) => {
     const page = parseInt(req.query.page) || 1;
@@ -114,10 +102,25 @@ const searchUsers = (req, res) => {
     });
 };
 
+// Get total user count
+const getUserCount = (req, res) => {
+    const sql = 'SELECT COUNT(*) AS totalUsers FROM manage_customer';
+
+    db.query(sql, (err, result) => {
+        if (err) {
+            console.error("Error fetching user count:", err.message);
+            return res.status(500).json({ message: 'Failed to fetch user count' });
+        }
+
+        const totalUsers = result[0].totalUsers;
+        res.status(200).json({ totalUsers });
+    });
+};
 
 module.exports = {
     addUser,
     getAllUsers,
     deleteUser,
     searchUsers,
+    getUserCount,
 };

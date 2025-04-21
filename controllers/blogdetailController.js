@@ -253,6 +253,26 @@ const getBlogdetailBySlug = (req, res) => {
 
 
 
+// Get the last 5 active blogs
+const getRecentBlogs = (req, res) => {
+    const sql = `
+        SELECT blogdetail_id, title, slug, image, created_at 
+        FROM manage_blogdetails 
+        WHERE status = 'Active' 
+        ORDER BY created_at DESC 
+        LIMIT 5
+    `;
+
+    db.query(sql, (err, results) => {
+        if (err) {
+            console.error("Error fetching recent blogs:", err);
+            return res.status(500).json({ message: "Internal Server Error" });
+        }
+
+        res.status(200).json({ data: results });
+    });
+};
+
 module.exports = {
     addBlogdetails,
     getblogDetail,
@@ -261,4 +281,5 @@ module.exports = {
     searchBlogdetail,
     updateBlogdetail,
     getBlogdetailBySlug,
+    getRecentBlogs,
 }

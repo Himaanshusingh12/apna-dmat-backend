@@ -6,7 +6,7 @@ const { uploadToCloudinary } = require("../config/cloudinary");
 //  Add blog category
 const addBlogcategory = async (req, res) => {
     try {
-        const { category } = req.body;
+        const { category, meta_title, meta_description, meta_keywords } = req.body;
 
         if (!category) {
             return res.status(400).json({ message: 'Category field is required!' });
@@ -25,8 +25,22 @@ const addBlogcategory = async (req, res) => {
         const slug = slugify(category, { lower: true, strict: true });
         const imageUrl = uploadResponse.secure_url;
 
-        const sql = 'INSERT INTO manage_blog (category, slug, image) VALUES (?, ?, ?)';
-        db.query(sql, [category, slug, imageUrl], (err, result) => {
+        const sql = `
+            INSERT INTO manage_blog 
+            (category, meta_title, meta_description, meta_keywords, slug, image) 
+            VALUES (?, ?, ?, ?, ?, ?)
+        `;
+
+        const values = [
+            category,
+            meta_title || null,
+            meta_description || null,
+            meta_keywords || null,
+            slug,
+            imageUrl
+        ];
+
+        db.query(sql, values, (err, result) => {
             if (err) {
                 console.error("Error inserting data:", err.message);
                 return res.status(500).json({ message: 'Failed to insert data' });
@@ -39,6 +53,9 @@ const addBlogcategory = async (req, res) => {
                     category,
                     slug,
                     image: imageUrl,
+                    meta_title,
+                    meta_description,
+                    meta_keywords,
                 },
             });
         });
@@ -163,10 +180,10 @@ const deleteBlogcategory = (req, res) => {
 // Edit blog category
 const editBlogcategory = async (req, res) => {
     const blogcategoryId = req.params.id;
-    const { category } = req.body;
+    const { category, meta_title, meta_description, meta_keywords } = req.body;
 
     if (!category) {
-        return res.status(400).json({ message: "All fields are required!" });
+        return res.status(400).json({ message: "Category field is required!" });
     }
 
     const slug = slugify(category, { lower: true, strict: true });
@@ -192,13 +209,27 @@ const editBlogcategory = async (req, res) => {
                 return res.status(404).json({ message: "Blog category not found!" });
             }
 
-            // Build update query dynamically
-            const updateQuery = `
-                UPDATE manage_blog 
-                SET category = ?, slug = ? ${imageUrl ? ', image = ?' : ''} 
-                WHERE blog_id = ?
-            `;
-            const values = imageUrl ? [category, slug, imageUrl, blogcategoryId] : [category, slug, blogcategoryId];
+            // Build the UPDATE query dynamically
+            let updateQuery = `
+          UPDATE manage_blog
+          SET 
+            category = ?, 
+            slug = ?, 
+            meta_title = ?, 
+            meta_description = ?, 
+            meta_keywords = ?
+        `;
+
+            // Conditionally append image field if it's provided
+            if (imageUrl) {
+                updateQuery += ", image = ?";
+            }
+
+            updateQuery += " WHERE blog_id = ?";
+
+            const values = imageUrl
+                ? [category, slug, meta_title, meta_description, meta_keywords, imageUrl, blogcategoryId]
+                : [category, slug, meta_title, meta_description, meta_keywords, blogcategoryId];
 
             db.query(updateQuery, values, (updateErr) => {
                 if (updateErr) {
@@ -209,12 +240,12 @@ const editBlogcategory = async (req, res) => {
                 res.status(200).json({ message: "Blog category updated successfully!" });
             });
         });
-
     } catch (error) {
         console.error("Image upload or update error:", error);
         res.status(500).json({ message: "Server error during update" });
     }
 };
+
 
 // Fetch only Active Blog category (For User Dashboard)
 const getActiveblogcategory = (req, res) => {

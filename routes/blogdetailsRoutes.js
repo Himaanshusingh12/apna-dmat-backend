@@ -1,7 +1,7 @@
 const express = require('express');
 
 const upload = require('../config/multer');
-const { addBlogdetails, getblogDetail, deleteBlogdetail, toggleBlogdetail, searchBlogdetail, updateBlogdetail, getBlogdetailBySlug, } = require('../controllers/blogdetailController');
+const { addBlogdetails, getblogDetail, deleteBlogdetail, toggleBlogdetail, searchBlogdetail, updateBlogdetail, getBlogdetailBySlug, getRecentBlogs, } = require('../controllers/blogdetailController');
 
 const router = express.Router();
 
@@ -19,5 +19,7 @@ router.get('/search', searchBlogdetail);
 router.put('/edit/:id', upload.single("image"), updateBlogdetail);
 
 router.get('/details/:slug', getBlogdetailBySlug);
+
+router.get('/resent-blogs', getRecentBlogs);
 
 module.exports = router;

@@ -101,10 +101,27 @@ const searchdetails = (req, res) => {
     });
 };
 
+// Get total user count
+const getUserCount = (req, res) => {
+    const sql = 'SELECT COUNT(*) AS totalUsers FROM manage_popupdetails';
+
+    db.query(sql, (err, result) => {
+        if (err) {
+            console.error("Error fetching user count:", err.message);
+            return res.status(500).json({ message: 'Failed to fetch user count' });
+        }
+
+        const totalUsers = result[0].totalUsers;
+        res.status(200).json({ totalUsers });
+    });
+};
+
+
 
 module.exports = {
     addpopupdetails,
     getallpopupdetails,
     deletepopupdetail,
     searchdetails,
+    getUserCount,
 }

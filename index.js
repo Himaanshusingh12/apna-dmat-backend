@@ -13,6 +13,7 @@ const blogdetailsRoutes = require('./routes/blogdetailsRoutes');
 const popupRoutes = require('./routes/popupRoutes');
 const sliderRoutes = require('./routes/sliderRoutes');
 const adminRoutes = require('./routes/adminRoutes');
+const seoRoutes = require('./routes/seoRoutes');
 require('dotenv').config();
 
 const app = express();
@@ -36,8 +37,6 @@ app.use(
         maxAge: 3600,
     })
 );
-
-
 app.use(express.json());
 
 
@@ -58,6 +57,7 @@ app.use('/api/blog-detail', blogdetailsRoutes);
 app.use('/api/popup-detail', popupRoutes);
 app.use('/api/slider', sliderRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/seo', seoRoutes);
 
 
 // Test Route

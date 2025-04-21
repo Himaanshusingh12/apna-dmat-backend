@@ -1,5 +1,5 @@
 const express = require('express');
-const { addpopupdetails, getallpopupdetails, deletepopupdetail, searchdetails } = require('../controllers/popupController');
+const { addpopupdetails, getallpopupdetails, deletepopupdetail, searchdetails, getUserCount } = require('../controllers/popupController');
 
 const router = express.Router();
 
@@ -12,5 +12,6 @@ router.delete('/delete/:id', deletepopupdetail);
 
 router.get('/search', searchdetails);
 
+router.get('/user-count', getUserCount);
 module.exports = router;
 

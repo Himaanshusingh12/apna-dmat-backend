@@ -3,22 +3,24 @@ const slugify = require('slugify');
 
 //  Add Service
 const addsubService = (req, res) => {
-    const { service_id, icon, title, description } = req.body;
+    const { service_id, icon, title, description, meta_title, meta_description, meta_keywords } = req.body;
     if (!service_id || !icon || !title || !description) {
         return res.status(400).json({ message: 'All fields are required!' });
     }
 
     const slug = slugify(title, { lower: true });
 
-    const sql = 'INSERT INTO manage_subservice (service_id, icon, title, slug, description) VALUES (?, ?, ?, ?, ?)';
-    db.query(sql, [service_id, icon, title, slug, description], (err, result) => {
+    const sql = 'INSERT INTO manage_subservice (service_id, icon, title, slug, description, meta_title, meta_description, meta_keywords) VALUES (?, ?, ?, ?, ?, ?, ?, ?)';
+    db.query(sql, [service_id, icon, title, slug, description, meta_title || null, meta_description || null, meta_keywords || null], (err, result) => {
         if (err) {
             console.error("Error inserting data:", err.message);
             return res.status(500).json({ message: 'Failed to insert data' });
         }
         res.status(201).json({
             message: 'Service added successfully!',
-            data: { id: result.insertId, service_id, icon, title, slug, description }
+            data: {
+                id: result.insertId, service_id, icon, title, slug, description, meta_title, meta_description, meta_keywords
+            }
         });
     });
 };
@@ -152,7 +154,7 @@ const deletesubService = (req, res) => {
 // Edit subservice 
 const editsubService = (req, res) => {
     const subserviceId = req.params.id;
-    const { icon, title, description } = req.body;
+    const { icon, title, description, meta_title, meta_description, meta_keywords } = req.body;
 
     if (!icon || !title || !description) {
         return res.status(400).json({ message: "All fields are required!" });
@@ -170,8 +172,8 @@ const editsubService = (req, res) => {
             return res.status(404).json({ message: "Sub service not found!" });
         }
 
-        const updateQuery = "UPDATE manage_subservice SET icon = ?, title = ?, slug = ?, description = ? WHERE subservice_id = ?";
-        db.query(updateQuery, [icon, title, slug, description, subserviceId], (updateErr) => {
+        const updateQuery = "UPDATE manage_subservice SET icon = ?, title = ?, slug = ?, description = ?, meta_title = ?, meta_description = ?, meta_keywords = ?  WHERE subservice_id = ?";
+        db.query(updateQuery, [icon, title, slug, description, meta_title || null, meta_description || null, meta_keywords || null, subserviceId], (updateErr) => {
             if (updateErr) {
                 console.error("Error updating sub service:", updateErr.message);
                 return res.status(500).json({ message: "Failed to update sub service" });
@@ -184,8 +186,7 @@ const editsubService = (req, res) => {
 
 // Fetch subservices based on service slug
 const getSubservicesBySlug = (req, res) => {
-    const { slug } = req.params; // Getting the slug from the URL parameters
-
+    const { slug } = req.params;
     const sql = `
         SELECT * 
         FROM manage_subservice 
