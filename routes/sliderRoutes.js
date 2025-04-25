@@ -4,7 +4,7 @@ const { addSlider, getSlider, toggleslider, deleteslider, getActiveSlider } = re
 
 const router = express.Router();
 
-router.post('/add', upload.fields([{ name: "image" }, { name: "image2" }]), addSlider);
+router.post('/add', upload.fields([{ name: "image" }, { name: "image2" }, { name: "image3" }, { name: "image4" }]), addSlider);
 
 router.get('/get', getSlider);
 

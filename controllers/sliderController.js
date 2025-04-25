@@ -11,6 +11,8 @@ const addSlider = async (req, res) => {
         // Upload images to Cloudinary
         const uploadResponse1 = await uploadToCloudinary(req.files.image[0].buffer);
         const uploadResponse2 = await uploadToCloudinary(req.files.image2[0].buffer);
+        const uploadResponse3 = await uploadToCloudinary(req.files.image3[0].buffer);
+        const uploadResponse4 = await uploadToCloudinary(req.files.image4[0].buffer);
 
         if (!uploadResponse1?.secure_url || !uploadResponse2?.secure_url) {
             return res.status(500).json({ message: "Failed to upload images to Cloudinary" });
@@ -18,11 +20,13 @@ const addSlider = async (req, res) => {
 
         const imageUrl1 = uploadResponse1.secure_url;
         const imageUrl2 = uploadResponse2.secure_url;
+        const imageUrl3 = uploadResponse3.secure_url;
+        const imageUrl4 = uploadResponse4.secure_url;
 
         // Insert into database with Cloudinary image URLs
-        const insertSql = `INSERT INTO manage_slider (image, image2) VALUES (?, ?)`;
+        const insertSql = `INSERT INTO manage_slider (image, image2, image3, image4) VALUES (?, ?, ?, ?)`;
 
-        db.query(insertSql, [imageUrl1, imageUrl2], (insertErr, result) => {
+        db.query(insertSql, [imageUrl1, imageUrl2, imageUrl3, imageUrl4], (insertErr, result) => {
             if (insertErr) {
                 console.error("Database Insert Error:", insertErr.message);
                 return res.status(500).json({ message: "Failed to add slider images", error: insertErr.message });
